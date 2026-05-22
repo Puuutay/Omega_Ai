@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="theme-color" content="#09090F"/>
+<title>Ω OmegaAI</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090F;--bg2:#111118;--bg3:#1A1A26;--bg4:#222232;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#EEEEF5;--text2:#9090B0;--text3:#55556A;
+  --accent:#6C63FF;--green:#00C9A7;--red:#FF6B6B;--amber:#FF9500;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:monospace;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:15px;height:100%;overflow:hidden}
+#root{height:100vh;display:flex;flex-direction:column}
+
+/* ── TABS (mobile bottom nav) ── */
+.tabs{display:flex;background:var(--bg2);border-top:1px solid var(--border);overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;color:var(--text3);font-size:10px;font-family:var(--font-b);transition:color .15s;min-width:60px;position:relative}
+.tab.act{color:var(--accent)}
+.tab.act::after{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:0 0 3px 3px}
+.tab-icon{font-size:20px;line-height:1}
+.tab-label{font-size:9.5px;white-space:nowrap}
+
+/* ── HEADER ── */
+.hdr{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hdr-icon{font-size:22px}
+.hdr-name{font-family:var(--font-h);font-size:17px;font-weight:800}
+.hdr-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.logo{font-family:var(--font-h);font-size:22px;font-weight:800;color:var(--accent);margin-right:2px}
+
+/* ── MESSAGES ── */
+.msgs{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.msg{display:flex;gap:8px;max-width:100%}
+.msg.user{flex-direction:row-reverse}
+.av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg4);border:1px solid var(--border)}
+.msg.user .av{background:var(--accent);border:none}
+.mb{max-width:calc(100% - 40px)}
+.bub{padding:10px 13px;border-radius:14px;line-height:1.7;font-size:14px;word-break:break-word}
+.msg.user .bub{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.msg.assistant .bub{background:var(--bg3);border:1px solid var(--border);border-bottom-left-radius:3px;color:var(--text)}
+.bub-time{font-size:10px;color:var(--text3);margin-top:3px}
+.msg.user .bub-time{text-align:right}
+.act-row{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.act-btn{font-size:11px;padding:4px 9px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font-b)}
+.act-btn.spk{color:var(--green);border-color:var(--green)}
+
+/* ── MARKDOWN ── */
+.md h1{font-family:var(--font-h);font-size:16px;font-weight:700;margin:10px 0 5px}
+.md h2{font-family:var(--font-h);font-size:14px;font-weight:700;margin:9px 0 4px;color:#b0b0d8}
+.md h3{font-family:var(--font-h);font-size:13px;font-weight:700;margin:8px 0 4px;color:#9090c0}
+.md strong{color:#fff;font-weight:600}
+.md ul,.md ol{padding-left:16px;margin:5px 0}
+.md li{margin:2px 0;font-size:13.5px}
+.md blockquote{border-left:3px solid var(--accent);padding-left:10px;margin:6px 0;color:var(--text2);font-style:italic;font-size:13.5px}
+.md hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+.md pre{background:rgba(0,0,0,.5);border-radius:8px;padding:10px 12px;margin:7px 0;overflow-x:auto;font-family:var(--font-m);font-size:12px;border:1px solid var(--border);line-height:1.5}
+.md code:not(pre code){background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;font-family:var(--font-m);font-size:12px;color:#b0e0d8}
+.md p{margin:4px 0;font-size:14px}
+.md table{width:100%;border-collapse:collapse;margin:6px 0;font-size:12px}
+.md th,.md td{padding:5px 8px;border:1px solid var(--border2)}
+.md th{background:rgba(255,255,255,.05);font-weight:600}
+
+/* ── TYPING ── */
+.typing{display:flex;gap:4px;align-items:center;padding:10px 13px}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:bc .9s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bc{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* ── CURSOR ── */
+.cur{display:inline-block;width:2px;height:13px;background:var(--accent);margin-left:1px;vertical-align:middle;animation:bl 1s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── INPUT ── */
+.inp-area{padding:10px 14px 12px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+.inp-row{display:flex;gap:8px;align-items:flex-end;background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:8px 10px;transition:border-color .2s}
+.inp-row:focus-within{border-color:rgba(108,99,255,.5)}
+.inp-row textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-b);font-size:14px;resize:none;min-height:22px;max-height:120px;line-height:1.6}
+.inp-row textarea::placeholder{color:var(--text3)}
+.send{width:34px;height:34px;border-radius:9px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.send:disabled{opacity:.3}
+
+/* ── WELCOME ── */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 20px;gap:12px}
+.w-icon{font-size:48px;animation:fl 3s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.w-title{font-family:var(--font-h);font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--text),var(--text2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.w-sub{color:var(--text2);font-size:13px;max-width:320px;line-height:1.7}
+.sugs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px;max-width:340px}
+.sug{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-size:12px;padding:6px 12px;border-radius:18px;cursor:pointer;font-family:var(--font-b);text-align:left}
+
+/* ── VIDEO ── */
+.vid-wrap{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.vid-wrap::-webkit-scrollbar{width:3px}
+.vid-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.scene-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.scene-n{font-size:10px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.scene-sec{margin-bottom:8px}
+.scene-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+.scene-val{font-size:13px;color:var(--text2);line-height:1.6}
+.prompt-box{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:var(--font-m);font-size:11.5px;color:#b0e0d8;line-height:1.5;margin-top:3px;overflow-x:auto}
+
+/* ── IMAGE ── */
+.img-wrap{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.img-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.img-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.img-card img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg4)}
+.img-card-body{padding:8px 10px}
+.img-loading{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--bg4);position:relative;overflow:hidden}
+.img-loading::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);animation:sh 1.5s infinite}
+@keyframes sh{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.hf-bar{padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.hf-inp{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:12px;padding:7px 10px;border-radius:8px;font-family:var(--font-m);outline:none;width:100%}
+.mdl-sel{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:12px;padding:7px 10px;border-radius:8px;font-family:var(--font-b);outline:none;width:100%}
+
+/* ── CONVERT ── */
+.conv-wrap{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:14px;align-items:center}
+.dz{width:100%;max-width:380px;min-height:130px;border:2px dashed var(--border2);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:24px;text-align:center}
+.dz.dov{border-color:var(--accent);background:rgba(108,99,255,.05)}
+.fmt-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:380px}
+.fmt-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font-b)}
+.fmt-btn.sel{border-color:var(--accent);color:var(--accent);background:rgba(108,99,255,.1)}
+.conv-res{width:100%;max-width:380px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;max-height:260px;overflow-y:auto;font-size:13px}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.badge.ok{background:rgba(0,201,167,.12);color:var(--green);border:1px solid rgba(0,201,167,.25)}
+.badge.warn{background:rgba(255,149,0,.12);color:var(--amber);border:1px solid rgba(255,149,0,.25)}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:999;transition:opacity .4s}
+#splash.hide{opacity:0;pointer-events:none}
+.sp-logo{font-size:54px;font-weight:800;color:var(--accent);font-family:var(--font-h)}
+.sp-name{font-size:20px;color:var(--text2);font-family:var(--font-h)}
+.sp-bar{width:140px;height:2px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:6px}
+.sp-fill{height:100%;width:0;background:var(--accent);animation:ld 1.4s ease forwards}
+@keyframes ld{to{width:100%}}
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="sp-logo">Ω</div>
+  <div class="sp-name">OmegaAI</div>
+  <div class="sp-bar"><div class="sp-fill"></div></div>
+</div>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState,useRef,useEffect,useCallback} = React;
+const API = "https://api.anthropic.com/v1/messages";
+const MDL = "claude-sonnet-4-20250514";
+const HFU = "https://api-inference.huggingface.co/models";
+
+const MODES = [
+  {id:"chat",    icon:"💬", label:"Chat",    color:"#6C63FF", desc:"General AI"},
+  {id:"research",icon:"🔍", label:"Research",color:"#00C9A7", desc:"Deep research"},
+  {id:"story",   icon:"📖", label:"Story",   color:"#FF6B6B", desc:"Storytelling"},
+  {id:"video",   icon:"🎬", label:"Video",   color:"#FF9500", desc:"Script + Prompts"},
+  {id:"image",   icon:"🖼️", label:"Images",  color:"#F472B6", desc:"AI Image Gen"},
+  {id:"code",    icon:"💻", label:"Code",    color:"#4ECDC4", desc:"Code gen"},
+  {id:"report",  icon:"📝", label:"Report",  color:"#A78BFA", desc:"Reports"},
+  {id:"convert", icon:"📁", label:"Files",   color:"#60A5FA", desc:"File convert"},
+];
+
+const PROMPTS = {
+  chat:`Ikaw ay matalinong AI assistant. Sumagot sa Filipino o English.`,
+  research:`Ikaw ay expert researcher. Sa bawat tanong gumamit ng markdown headers, bullets, at bold text. Mag-include ng Key Findings, Analysis, at Recommendations.`,
+  story:`Ikaw ay creative storyteller. Gumawa ng vivid, dramatic narratives na may rich characters, dialogue, at emotional depth. Isulat sa Filipino o English per request.`,
+  video:`Ikaw ay AI video director. Gumawa ng VIDEO SCRIPT na may eksaktong format na ito:
+
+## 🎬 [TITLE]
+**Duration:** X minutes · **Genre:** [genre]
+
+---
+### SCENE 1 — [Title]
+**NARRATION:**
+[text na babasahin ng AI voice]
+
+**VISUAL DESCRIPTION (para sa AI image gen):**
+[detailed SD/ComfyUI prompt in English]
+
+**NEGATIVE PROMPT:** [what to avoid]
+**CAMERA:** [angle/movement] · **SOUND:** [music/sfx]
+
+---
+[minimum 5 scenes, same format]
+
+### 📋 PRODUCTION NOTES
+[video pipeline notes]`,
+  image:`Ikaw ay SD/ComfyUI expert. Gumawa ng 3 detailed image prompts per request.
+
+Format:
+### 🎨 [Title]
+**POSITIVE:** [detailed comma-separated prompt, quality tags, style, lighting]
+**NEGATIVE:** [things to avoid]
+**SETTINGS:** Model, Steps: 30, CFG: 7, Res: 512x768`,
+  code:`Expert programmer. Mag-write ng clean, working, well-commented code. Explain ang approach. Best practices.`,
+  report:`Professional report writer. Gumawa ng structured reports: Executive Summary, Key Findings, Analysis, Recommendations, Conclusion. Markdown formatting.`,
+  convert:`File processing assistant. Mag-process ng file content per user request.`,
+};
+
+const SUGS = {
+  chat:["Kamusta!","Ano ang pwede mong gawin?","Tulungan mo ako"],
+  research:["AI trends Pilipinas 2025","Paano gumagana ang blockchain?","Best renewable energy solutions"],
+  story:["Horror story sa probinsya","Romcom sa Iloilo City","Fantasy: Babaylan warrior"],
+  video:["Short film: OFW homecoming","Thriller: Missing person Visayas","Documentary: Iloilo heritage"],
+  image:["Sunset sa Iloilo River, cinematic","Filipino warrior, epic fantasy","Cyberpunk Manila street at night"],
+  code:["React todo app","Python web scraper","REST API with FastAPI"],
+  report:["Business plan: food startup","AI adoption sa Pilipinas","Tourism: Western Visayas"],
+  convert:["I-summarize ang doc ko","Extract key points","I-translate sa Filipino"],
+};
+
+const HF_MODELS = [
+  {id:"black-forest-labs/FLUX.1-schnell",label:"FLUX.1 Schnell (Fast)"},
+  {id:"stabilityai/stable-diffusion-xl-base-1.0",label:"SDXL Base"},
+  {id:"runwayml/stable-diffusion-v1-5",label:"SD v1.5"},
+  {id:"prompthero/openjourney",label:"Openjourney"},
+];
+
+function mdRender(raw=""){
+  let s = raw
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${c.trim()}</code></pre>`)
+    .replace(/`([^`\n]+)`/g,"<code>$1</code>")
+    .replace(/^### (.+)$/gm,"<h3>$1</h3>")
+    .replace(/^## (.+)$/gm,"<h2>$1</h2>")
+    .replace(/^# (.+)$/gm,"<h1>$1</h1>")
+    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,"<em>$1</em>")
+    .replace(/^> (.+)$/gm,"<blockquote>$1</blockquote>")
+    .replace(/^---+$/gm,"<hr>")
+    .replace(/^\[x\] (.+)$/gm,"<li>✅ $1</li>")
+    .replace(/^[\-\*] (.+)$/gm,"<li>$1</li>")
+    .replace(/^\d+\. (.+)$/gm,"<li>$1</li>")
+    .replace(/\n{2,}/g,"</p><p>").replace(/\n/g,"<br>");
+  s=s.replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>");
+  return `<div class="md"><p>${s}</p></div>`;
+}
+
+function ts(){return new Date().toLocaleTimeString("en-PH",{hour:"2-digit",minute:"2-digit"})}
+
+function CopyBtn({text,lbl="⎘ Copy"}){
+  const [d,setD]=useState(false);
+  return <button className="act-btn" onClick={()=>{navigator.clipboard.writeText(text);setD(true);setTimeout(()=>setD(false),1500)}}>{d?"✓ Copied":lbl}</button>;
+}
+function DlBtn({text,name="out.txt",lbl="↓ Save"}){
+  return <button className="act-btn" onClick={()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/plain"}));a.download=name;a.click()}}>{lbl}</button>;
+}
+function SpeakBtn({text}){
+  const [sp,setSp]=useState(false);
+  const go=()=>{
+    if(sp){speechSynthesis.cancel();setSp(false);return}
+    const clean=text.replace(/#{1,3} /g,"").replace(/\*\*/g,"").replace(/\*/g,"").replace(/`/g,"");
+    const u=new SpeechSynthesisUtterance(clean);
+    u.lang="fil-PH";u.rate=0.95;
+    const v=speechSynthesis.getVoices();
+    const fil=v.find(x=>x.lang.includes("fil")||x.lang.includes("tl"));
+    if(fil)u.voice=fil;
+    u.onend=()=>setSp(false);
+    speechSynthesis.speak(u);setSp(true);
+  };
+  return <button className={`act-btn ${sp?"spk":""}`} onClick={go}>{sp?"⏹ Stop":"🔊 Speak"}</button>;
+}
+
+function MsgBubble({m,mode,streaming}){
+  const isU=m.role==="user";
+  const modeObj=MODES.find(x=>x.id===mode)||MODES[0];
+  return(
+    <div className={`msg ${m.role}`}>
+      <div className="av">{isU?"👤":modeObj.icon}</div>
+      <div className="mb">
+        {isU
+          ?<div className="bub" dangerouslySetInnerHTML={{__html:m.content.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>")}}/>
+          :<div className="bub" dangerouslySetInnerHTML={{__html:mdRender(m.content)+(streaming?'<span class="cur"></span>':"")}}/>
+        }
+        {!isU&&!streaming&&m.content&&(
+          <div className="act-row">
+            <CopyBtn text={m.content}/>
+            <SpeakBtn text={m.content}/>
+            {["story","report","video"].includes(mode)&&<DlBtn text={m.content} name={`${mode}-${Date.now()}.txt`}/>}
+          </div>
+        )}
+        <div className="bub-time">{m.time}</div>
+      </div>
+    </div>
+  );
+}
+
+function ChatPanel({mode}){
+  const [msgs,setMsgs]=useState([]);
+  const [inp,setInp]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [sid,setSid]=useState(null);
+  const endRef=useRef();
+  const taRef=useRef();
+  useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"})},[msgs]);
+
+  const send=async(text)=>{
+    const c=(text||inp).trim();
+    if(!c||busy)return;
+    setInp("");
+    if(taRef.current)taRef.current.style.height="auto";
+    const uid=`u${Date.now()}`,aid=`a${Date.now()+1}`;
+    setMsgs(p=>[...p,{id:uid,role:"user",content:c,time:ts()},{id:aid,role:"assistant",content:"",time:ts()}]);
+    setBusy(true);setSid(aid);
+    const hist=[...msgs.map(m=>({role:m.role,content:m.content})),{role:"user",content:c}];
+    try{
+      const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:MDL,max_tokens:1000,system:PROMPTS[mode]||PROMPTS.chat,messages:hist})});
+      const data=await res.json();
+      const reply=data.content?.map(b=>b.text||"").join("")||"Walang response.";
+      setMsgs(p=>p.map(m=>m.id===aid?{...m,content:reply}:m));
+    }catch(e){
+      setMsgs(p=>p.map(m=>m.id===aid?{...m,content:`❌ Error: ${e.message}`}:m));
+    }
+    setBusy(false);setSid(null);
+  };
+
+  const mObj=MODES.find(x=>x.id===mode)||MODES[0];
+  const ph={chat:"Mag-type…",research:"Anong topic?",story:"Anong kwento?",code:"Anong code?",report:"Anong ulat?"}[mode]||"Mag-type…";
+
+  return(
+    <>
+      <div className="msgs">
+        {msgs.length===0?(
+          <div className="welcome">
+            <div className="w-icon">{mObj.icon}</div>
+            <div className="w-title">{mObj.label}</div>
+            <div className="w-sub">{{
+              chat:"Kamusta! Ako ang iyong AI. Ano ang maitutulong ko?",
+              research:"I-type ang topic at gagawa ako ng malalim na research.",
+              story:"Sabihin ang gusto mong kwento — genre, setting, chars!",
+              code:"Sabihin ang gusto mong i-build o i-fix.",
+              report:"Anong ulat ang kailangan? Ibigay ang topic.",
+            }[mode]||"Paano kita matutulungan?"}</div>
+            <div className="sugs">{(SUGS[mode]||[]).map((s,i)=><button key={i} className="sug" onClick={()=>send(s)}>{s}</button>)}</div>
+          </div>
+        ):msgs.map(m=><MsgBubble key={m.id} m={m} mode={mode} streaming={m.id===sid}/>)}
+        {busy&&msgs[msgs.length-1]?.content===""&&(
+          <div className="msg assistant"><div className="av">{mObj.icon}</div>
+            <div className="bub"><div className="typing"><span/><span/><span/></div></div>
+          </div>
+        )}
+        <div ref={endRef}/>
+      </div>
+      <div className="inp-area">
+        <div className="inp-row">
+          <textarea ref={taRef} value={inp} disabled={busy} placeholder={ph} rows={1}
+            onChange={e=>{setInp(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px"}}
+            onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}}/>
+          <button className="send" disabled={!inp.trim()||busy} onClick={()=>send()}>{busy?"⏳":"↑"}</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function VideoPanel(){
+  const [concept,setConcept]=useState("");
+  const [script,setScript]=useState("");
+  const [scenes,setScenes]=useState([]);
+  const [busy,setBusy]=useState(false);
+
+  const gen=async()=>{
+    if(!concept.trim()||busy)return;
+    setBusy(true);setScript("");setScenes([]);
+    try{
+      const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:MDL,max_tokens:1000,system:PROMPTS.video,
+          messages:[{role:"user",content:`Gumawa ng video script para sa: ${concept}`}]})});
+      const data=await res.json();
+      const text=data.content?.map(b=>b.text||"").join("")||"";
+      setScript(text);
+      const sm=[...text.matchAll(/### SCENE (\d+)[^\n]*\n([\s\S]*?)(?=### SCENE|\n### 📋|$)/g)];
+      setScenes(sm.map((m,i)=>({num:i+1,block:m[2]})));
+    }catch(e){setScript("❌ Error: "+e.message)}
+    setBusy(false);
+  };
+
+  const ext=(block,key)=>{
+    const re=new RegExp(`\\*\\*${key}[^*]*\\*\\*[:\\n]?([\\s\\S]*?)(?=\\*\\*[A-Z]|$)`);
+    return block.match(re)?.[1]?.trim()||"";
+  };
+
+  return(
+    <div className="vid-wrap">
+      <div style={{marginBottom:12}}>
+        <textarea value={concept} onChange={e=>setConcept(e.target.value)} placeholder="Describe ang video concept (e.g. 'OFW homecoming sa Iloilo, emotional, cinematic')" rows={3} disabled={busy}
+          style={{width:"100%",background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:12,padding:"10px 12px",color:"var(--text)",fontFamily:"var(--font-b)",fontSize:14,resize:"none",outline:"none",lineHeight:1.6,marginBottom:8}}/>
+        <button onClick={gen} disabled={!concept.trim()||busy}
+          style={{width:"100%",padding:"11px",background:"var(--accent)",border:"none",borderRadius:10,color:"#fff",fontSize:14,fontFamily:"var(--font-b)",cursor:"pointer"}}>
+          {busy?"⏳ Generating script…":"🎬 Generate Video Script"}
+        </button>
+        <p style={{fontSize:11,color:"var(--text3)",marginTop:6,textAlign:"center"}}>Gagawa ng full script + AI image prompts per scene</p>
+      </div>
+
+      {busy&&<div className="msg assistant" style={{alignSelf:"flex-start"}}>
+        <div className="av">🎬</div><div className="bub"><div className="typing"><span/><span/><span/></div></div>
+      </div>}
+
+      {script&&!busy&&(
+        <>
+          <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+            <CopyBtn text={script} lbl="⎘ Copy All"/>
+            <DlBtn text={script} name="script.txt" lbl="↓ Download"/>
+            <SpeakBtn text={script}/>
+          </div>
+          {scenes.length>0?scenes.map(sc=>(
+            <div key={sc.num} className="scene-card">
+              <div className="scene-n">Scene {sc.num}</div>
+              <div className="scene-sec">
+                <div className="scene-lbl">Visual Prompt (para sa ComfyUI)</div>
+                <div className="prompt-box">{ext(sc.block,"VISUAL DESCRIPTION")||"—"}</div>
+                <CopyBtn text={ext(sc.block,"VISUAL DESCRIPTION")||""}/>
+              </div>
+              <div className="scene-sec">
+                <div className="scene-lbl">Narration</div>
+                <div className="scene-val">{ext(sc.block,"NARRATION")||"—"}</div>
+                <SpeakBtn text={ext(sc.block,"NARRATION")||""}/>
+              </div>
+            </div>
+          )):<div className="scene-card"><div dangerouslySetInnerHTML={{__html:mdRender(script)}}/></div>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ImagePanel(){
+  const [prompt,setPrompt]=useState("");
+  const [neg,setNeg]=useState("blurry, low quality, bad anatomy, watermark");
+  const [hfKey,setHfKey]=useState("");
+  const [model,setModel]=useState(HF_MODELS[0].id);
+  const [imgs,setImgs]=useState([]);
+  const [busy,setBusy]=useState(false);
+
+  const enhance=async()=>{
+    if(!prompt.trim()||busy)return;setBusy(true);
+    try{
+      const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:MDL,max_tokens:300,
+          system:"Expand the user's idea into a detailed Stable Diffusion prompt. Output ONLY the prompt, no explanation. Add quality tags: masterpiece, best quality, highly detailed, 8k.",
+          messages:[{role:"user",content:`Expand: ${prompt}`}]})});
+      const data=await res.json();
+      setPrompt(data.content?.[0]?.text||prompt);
+    }catch(e){}
+    setBusy(false);
+  };
+
+  const generate=async()=>{
+    if(!prompt.trim()||busy)return;
+    const id=Date.now();
+    setImgs(p=>[{id,prompt,status:"loading",url:null,error:null},...p]);
+    setBusy(true);
+    try{
+      const hdrs={"Content-Type":"application/json"};
+      if(hfKey)hdrs["Authorization"]=`Bearer ${hfKey}`;
+      const res=await fetch(`${HFU}/${model}`,{method:"POST",headers:hdrs,
+        body:JSON.stringify({inputs:prompt,parameters:{negative_prompt:neg,num_inference_steps:25,guidance_scale:7.5}})});
+      if(!res.ok)throw new Error(`HF ${res.status} — mag-add ng HF token`);
+      const blob=await res.blob();
+      const url=URL.createObjectURL(blob);
+      setImgs(p=>p.map(img=>img.id===id?{...img,status:"done",url}:img));
+    }catch(e){
+      setImgs(p=>p.map(img=>img.id===id?{...img,status:"error",error:e.message}:img));
+    }
+    setBusy(false);
+  };
+
+  return(
+    <>
+      <div className="hf-bar">
+        <input className="hf-inp" type="password" placeholder="HF Token (optional): hf_xxxx — para mas mabilis" value={hfKey} onChange={e=>setHfKey(e.target.value)}/>
+        <select className="mdl-sel" value={model} onChange={e=>setModel(e.target.value)}>
+          {HF_MODELS.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}
+        </select>
+        <span className={`badge ${hfKey?"ok":"warn"}`}>{hfKey?"✓ Token set":"⚠ Free tier — may queue"}</span>
+      </div>
+      <div className="img-wrap">
+        <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Describe ang gusto mong image…" rows={2}
+          style={{width:"100%",background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:10,padding:"9px 12px",color:"var(--text)",fontFamily:"var(--font-b)",fontSize:13.5,resize:"none",outline:"none",lineHeight:1.6,marginBottom:8}}/>
+        <textarea value={neg} onChange={e=>setNeg(e.target.value)} placeholder="Negative prompt…" rows={1}
+          style={{width:"100%",background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:10,padding:"8px 12px",color:"var(--text2)",fontFamily:"var(--font-m)",fontSize:12,resize:"none",outline:"none",lineHeight:1.5,marginBottom:8}}/>
+        <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}>
+          <button onClick={generate} disabled={!prompt.trim()||busy}
+            style={{flex:1,minWidth:120,padding:"10px",background:"var(--accent)",border:"none",borderRadius:9,color:"#fff",fontSize:13.5,fontFamily:"var(--font-b)",cursor:"pointer"}}>
+            {busy?"⏳ Generating…":"🖼️ Generate"}
+          </button>
+          <button onClick={enhance} disabled={!prompt.trim()||busy}
+            style={{padding:"10px 14px",background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:9,color:"var(--text2)",fontSize:13,fontFamily:"var(--font-b)",cursor:"pointer"}}>
+            ✨ Enhance
+          </button>
+          <CopyBtn text={prompt}/>
+        </div>
+        {imgs.length===0&&(
+          <div style={{textAlign:"center",padding:"30px 10px",color:"var(--text3)"}}>
+            <div style={{fontSize:40,marginBottom:8}}>🖼️</div>
+            <div style={{fontSize:13,color:"var(--text2)",marginBottom:10}}>AI Image Generator</div>
+            <div className="sugs">{SUGS.image.map((s,i)=><button key={i} className="sug" onClick={()=>setPrompt(s)}>{s}</button>)}</div>
+          </div>
+        )}
+        {imgs.length>0&&(
+          <div className="img-grid">
+            {imgs.map(img=>(
+              <div key={img.id} className="img-card">
+                {img.status==="loading"&&<div className="img-loading"><span style={{fontSize:28}}>⏳</span></div>}
+                {img.status==="done"&&img.url&&<img src={img.url} alt={img.prompt}/>}
+                {img.status==="error"&&<div className="img-loading" style={{flexDirection:"column",gap:6,padding:10}}>
+                  <span style={{fontSize:24}}>❌</span>
+                  <span style={{fontSize:11,color:"var(--red)",textAlign:"center",lineHeight:1.4}}>{img.error}</span>
+                </div>}
+                <div className="img-card-body">
+                  <div style={{display:"flex",gap:5}}>
+                    <CopyBtn text={img.prompt}/>
+                    {img.status==="done"&&img.url&&<button className="act-btn" onClick={()=>{const a=document.createElement("a");a.href=img.url;a.download=`img-${img.id}.png`;a.click()}}>↓</button>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function ConvertPanel(){
+  const [file,setFile]=useState(null);
+  const [fmt,setFmt]=useState("summary");
+  const [drag,setDrag]=useState(false);
+  const [result,setResult]=useState("");
+  const [busy,setBusy]=useState(false);
+  const ref=useRef();
+  const fmts=["summary","markdown","key-points","outline","json","csv","translation"];
+
+  const convert=async()=>{
+    if(!file||busy)return;setBusy(true);setResult("");
+    try{
+      const text=await file.text();
+      const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:MDL,max_tokens:1000,
+          system:`Process the provided content into ${fmt} format. For 'translation', translate to Filipino. For 'key-points', extract most important points as bullets. For 'summary', write a concise summary. Be thorough.`,
+          messages:[{role:"user",content:`Process into ${fmt}:\n\nFilename: ${file.name}\n\nContent:\n${text.slice(0,8000)}`}]})});
+      const data=await res.json();
+      setResult(data.content?.[0]?.text||"Error.");
+    }catch(e){setResult("Error: "+e.message)}
+    setBusy(false);
+  };
+
+  return(
+    <div className="conv-wrap">
+      <div className={`dz ${drag?"dov":""}`} onClick={()=>ref.current.click()}
+        onDragOver={e=>{e.preventDefault();setDrag(true)}} onDragLeave={()=>setDrag(false)}
+        onDrop={e=>{e.preventDefault();setDrag(false);setFile(e.dataTransfer.files[0]);setResult("")}}>
+        <input ref={ref} type="file" style={{display:"none"}} onChange={e=>{setFile(e.target.files[0]);setResult("")}}/>
+        <div style={{fontSize:36}}>{file?"📄":"📁"}</div>
+        <div style={{fontSize:13,color:"var(--text2)"}}>
+          {file?<><strong style={{color:"var(--text)"}}>{file.name}</strong><br/><span style={{fontSize:11,color:"var(--text3)"}}>({(file.size/1024).toFixed(1)} KB)</span></>:<>Tap para pumili ng file<br/><span style={{fontSize:11,color:"var(--text3)"}}>TXT, MD, CSV, JSON, HTML, code</span></>}
+        </div>
+      </div>
+      <div style={{textAlign:"center"}}>
+        <p style={{fontSize:12,color:"var(--text2)",marginBottom:8}}>I-process bilang:</p>
+        <div className="fmt-row">
+          {fmts.map(f=><button key={f} className={`fmt-btn ${fmt===f?"sel":""}`} onClick={()=>setFmt(f)}>{f}</button>)}
+        </div>
+      </div>
+      <button onClick={convert} disabled={!file||busy}
+        style={{padding:"11px 28px",background:"var(--accent)",border:"none",borderRadius:10,color:"#fff",fontSize:14,fontFamily:"var(--font-b)",cursor:"pointer"}}>
+        {busy?"⏳ Processing…":"⚡ Process File"}
+      </button>
+      {result&&(
+        <div className="conv-res">
+          <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+            <CopyBtn text={result}/><DlBtn text={result} name={`processed-${file?.name}.txt`}/><SpeakBtn text={result}/>
+          </div>
+          <div dangerouslySetInnerHTML={{__html:mdRender(result)}}/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App(){
+  const [mode,setMode]=useState("chat");
+  const mObj=MODES.find(x=>x.id===mode)||MODES[0];
+
+  useEffect(()=>{
+    setTimeout(()=>{
+      const s=document.getElementById("splash");
+      if(s){s.classList.add("hide");setTimeout(()=>s.remove(),500)}
+    },1600);
+  },[]);
+
+  return(
+    <div style={{height:"100vh",display:"flex",flexDirection:"column",background:"var(--bg)"}}>
+      {/* Header */}
+      <div className="hdr">
+        <span className="logo">Ω</span>
+        <div>
+          <div className="hdr-name" style={{color:mObj.color}}>{mObj.icon} {mObj.label}</div>
+          <div className="hdr-sub">{mObj.desc}</div>
+        </div>
+        <div style={{marginLeft:"auto"}}><span className="badge ok">● AI Live</span></div>
+      </div>
+
+      {/* Content */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        {mode==="video"   ?<VideoPanel/>:
+         mode==="image"   ?<ImagePanel/>:
+         mode==="convert" ?<ConvertPanel/>:
+         <ChatPanel mode={mode}/>}
+      </div>
+
+      {/* Bottom tabs */}
+      <div className="tabs">
+        {MODES.map(m=>(
+          <button key={m.id} className={`tab ${mode===m.id?"act":""}`} onClick={()=>setMode(m.id)}>
+            <span className="tab-icon">{m.icon}</span>
+            <span className="tab-label">{m.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
